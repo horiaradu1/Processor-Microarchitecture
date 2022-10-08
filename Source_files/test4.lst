@@ -1,0 +1,231 @@
+00000000:       ;         ;; definitive test of STUMP processor
+00000000:       ;         ;; test4.s
+00000000:       ;         ;; tests conditional branches
+00000000:       ;         ;; bal assumed working (previous tests)
+00000000:       ;         ;; bnv not tested
+00000000:       ; 
+00000000:       ;         ;; tests not exhaustive (would take too long)
+00000000:       ;         ;; r6 = pointer to data
+00000000:       ;         ;; r5 = pointer to results
+00000000:       ;         
+00000000:       ;         
+00000000: F040  ;         bal Main
+00000040:       ;         org 64
+00000040: 8000  ; Nums:   data 0x8000
+00000041: 16FE  ; Main:   add r6, pc, #Nums-Next  ; pointer to Nums
+00000042: 1500  ; Next:   add r5, r0, #0          ; pointer to results
+00000043: 0800  ;         adds r0, r0, r0         ; set zero flag, clear others
+00000044: 1401  ;         add r4, r0, #1          ; set test count to one
+00000045:       ;         
+00000045:       ;         ;; test of BEQ
+00000045: F702  ;         beq La
+00000046: DFA1  ;         st pc, [r5, #1]
+00000047: F001  ;         bal L1
+00000048: DCA1  ; La:     st r4, [r5, #1]         ; after 16 clocks
+00000049:       ;         ;; mem[1] = 1 (PC otherwise)
+00000049:       ;         ;; checked beq
+00000049:       ; 
+00000049:       ;         ;; test of BLS (Z=1)
+00000049: 1481  ; L1:     add r4, r4, #1
+0000004A: F302  ;         bls Lb
+0000004B: DFA2  ;         st pc, [r5, #2]
+0000004C: F001  ;         bal L2
+0000004D: DCA2  ; Lb:     st r4, [r5, #2]         ; after 23 clocks
+0000004E:       ;         ;; mem[2] = 2 (PC otherwise)
+0000004E:       ; 
+0000004E:       ;         ;; test of BLE (Z=1)
+0000004E: 1481  ; L2:     add r4, r4, #1
+0000004F: FF02  ;         ble Lc
+00000050: DFA3  ;         st pc, [r5, #3]
+00000051: F001  ;         bal L3
+00000052: DCA3  ; Lc:     st r4, [r5, #3]         ; after 30 clocks
+00000053:       ;         ;; mem[3] = 3 (PC otherwise)
+00000053:       ; 
+00000053:       ;         ;; test of BLS (C=1)
+00000053: 1481  ; L3:     add r4, r4, #1
+00000054: 7801  ;         sbcs r0, r0, #1         ; set CY flag (+ N flag !Z)
+00000055: F302  ;         bls Le
+00000056: DFA4  ;         st pc, [r5, #4]
+00000057: F001  ;         bal L4
+00000058: DCA4  ; Le:     st r4, [r5, #4]         ; after 39 clocks
+00000059:       ;         ;; mem[4] = 4 (PC otherwise)
+00000059:       ;         ;; checked blz for both flags
+00000059:       ; 
+00000059:       ;         ;; Now check BCS
+00000059: 1481  ; L4:     add r4, r4, #1
+0000005A: F502  ;         bcs Lf
+0000005B: DFA5  ;         st pc, [r5, #5]
+0000005C: F001  ;         bal L5
+0000005D: DCA5  ; Lf:     st r4, [r5, #5]         ; after 46 clocks
+0000005E:       ;         ;; mem[5] =5 (PC otherwise)
+0000005E:       ; 
+0000005E:       ;         ;; Now check BMI
+0000005E: 1481  ; L5:     add r4, r4, #1
+0000005F: FB02  ;         bmi Lg
+00000060: DFA6  ;         st pc, [r5, #6]
+00000061: F001  ;         bal L6
+00000062: DCA6  ; Lg:     st r4, [r5, #6]         ; after 53 clocks
+00000063:       ;         ;; mem[6] = 6 (PC otherwise)
+00000063:       ; 
+00000063:       ;         ;; Now test BLT (N.!V = 1)
+00000063: 1481  ; L6:     add r4, r4, #1
+00000064: 5801  ;         cmp r0, #1              ; NZVC=1001 0 < 1
+00000065: FD02  ;         blt Lh
+00000066: DFA7  ;         st pc, [r5, #7]
+00000067: F001  ;         bal L7
+00000068: DCA7  ; Lh:     st r4, [r5, #7]         ; after 62 clocks
+00000069:       ;         ;; mem[7] = 7 (PC otherwise)
+00000069:       ; 
+00000069:       ;         ;; test BLE (N.!V = 1)
+00000069: 1481  ; L7:     add r4, r4, #1
+0000006A: FF02  ;         ble Li
+0000006B: DFA8  ;         st pc, [r5, #8]
+0000006C: F001  ;         bal L8
+0000006D: DCA8  ; Li:     st r4, [r5, #8]         ; after 69 clocks
+0000006E:       ;         ;; mem[8] = 8 (PC otherwise)
+0000006E:       ;         
+0000006E:       ;         ;; test BLT (!N.V = 1)
+0000006E: 1481  ; L8:     add r4, r4, #1
+0000006F: D3C0  ;         ld r3, [r6, #0]
+00000070: 5861  ;         cmp r3, #1              ; NZVC=0010
+00000071: FD02  ;         blt Lj
+00000072: DFA9  ;         st pc, [r5, #9]
+00000073: F001  ;         bal L9
+00000074: DCA9  ; Lj:     st r4, [r5, #9]         ; after 81 clocks
+00000075:       ;         ;; mem[9] = 9 (PC otherwise)
+00000075:       ; 
+00000075:       ;         ;; test BLE (!N.V = 1)
+00000075: 1481  ; L9:     add r4, r4, #1
+00000076: FF02  ;         ble Lk
+00000077: DFAA  ;         st pc, [r5, #10]
+00000078: F001  ;         bal L10
+00000079: DCAA  ; Lk:     st r4, [r5, #10]        ; after 88 clocks
+0000007A:       ;         ;; mem[10] = 10 (PC otherwise)
+0000007A:       ; 
+0000007A:       ;         ;; test BVS
+0000007A: 1481  ; L10:    add r4, r4, #1
+0000007B: F902  ;         bvs Ll
+0000007C: DFAB  ;         st pc, [r5, #11]
+0000007D: F001  ;         bal L11
+0000007E: DCAB  ; Ll:     st r4, [r5, #11]        ; after 95 clocks
+0000007F:       ;         ;; mem[11] = 11 (PC otherwise)
+0000007F:       ;         
+0000007F: 1481  ; L11:    add r4, r4, #1
+00000080: 1801  ;         adds r0, r0, #1         ; clear flags
+00000081:       ;         
+00000081:       ;         ;; test BCC
+00000081: F402  ;         bcc Lm
+00000082: DFAC  ;         st pc, [r5, #12]
+00000083: F001  ;         bal L12
+00000084: DCAC  ; Lm:     st r4, [r5, #12]        ; after 104 clocks
+00000085:       ;         ;; mem[12] = 12 (PC otherwise)
+00000085:       ; 
+00000085:       ;         ;; test BHI
+00000085: 1481  ; L12:    add r4, r4, #1
+00000086: F202  ;         bhi Ln
+00000087: DFAD  ;         st pc, [r5, #13]
+00000088: F001  ;         bal L13
+00000089: DCAD  ; Ln:     st r4, [r5, #13]        ; after 111 clocks
+0000008A:       ;         ;; mem[13] = 13 (PC otherwise)
+0000008A:       ; 
+0000008A:       ;         ;; test BNE
+0000008A: 1481  ; L13:    add r4, r4, #1
+0000008B: F602  ;         bne Lo
+0000008C: DFAE  ;         st pc, [r5, #14]
+0000008D: F001  ;         bal L14
+0000008E: DCAE  ; Lo:     st r4, [r5, #14]        ; after 118 clocks
+0000008F:       ;         ;; mem[14] = 14 (PC otherwise)
+0000008F:       ;         
+0000008F:       ;         ;; test BVC
+0000008F: 1481  ; L14:    add r4, r4, #1
+00000090: F802  ;         bvc Lp
+00000091: DFAF  ;         st pc, [r5, #15]
+00000092: F001  ;         bal L15
+00000093: DCAF  ; Lp:     st r4, [r5, #15]        ; after 125 clocks
+00000094:       ;         ;; mem[15] = 15 (PC otherwise)
+00000094:       ; 
+00000094:       ;         ;; test BPL
+00000094: 1481  ; L15:    add r4, r4, #1
+00000095: 150F  ;         add r5, r0, #15         ; r5 = 15
+00000096: FA02  ;         bpl Lq
+00000097: DFA1  ;         st pc, [r5, #1]
+00000098: F001  ;         bal L16
+00000099: DCA1  ; Lq:     st r4, [r5, #1] ; after 134 clocks
+0000009A:       ;         ;; mem[16] = 16 (PC otherwise)
+0000009A:       ; 
+0000009A:       ;         ;; test BGE (N.V = 1)
+0000009A: 1481  ; L16:    add r4, r4, #1
+0000009B: 480C  ;         cmp r0, r3              ; NZVC = 1011
+0000009C: FC02  ;         bge Lr
+0000009D: DFA2  ;         st pc, [r5, #2]
+0000009E: F001  ;         bal L17
+0000009F: DCA2  ; Lr:     st r4, [r5, #2]         ; after 143 clocks
+000000A0:       ;         ;; mem[17] = 17 (PC otherwise)
+000000A0:       ; 
+000000A0:       ;         ;;  test BGT (N.V = 1)
+000000A0: 1481  ; L17:    add r4, r4, #1
+000000A1: FE02  ;         bgt Ls
+000000A2: DFA3  ;         st pc, [r5, #3]
+000000A3: F001  ;         bal L18
+000000A4: DCA3  ; Ls:     st r4, [r5, #3]         ; after 150 clocks
+000000A5:       ;         ;; mem[18] = 18 (PC otherwise)
+000000A5:       ; 
+000000A5:       ;         ;; test BGE (!N.!V = 1)
+000000A5: 1481  ; L18:    add r4, r4, #1
+000000A6: 58E1  ;         cmp r7, #1              ; NZVC= 0000
+000000A7: FC02  ;         bge Lt
+000000A8: DFA4  ;         st pc, [r5, #4]
+000000A9: F001  ;         bal L19
+000000AA: DCA4  ; Lt:     st r4, [r5, #4]         ; after 159 clocks
+000000AB:       ;         ;; mem[19] = 19 (PC otherwise)
+000000AB:       ; 
+000000AB:       ;         ;; test BGT (!N.!V = 1)
+000000AB: 1481  ; L19:    add r4, r4, #1
+000000AC: FE02  ;         bgt Lu
+000000AD: DFA5  ;         st pc, [r5, #5]
+000000AE: F001  ;         bal L20
+000000AF: DCA5  ; Lu:     st r4, [r5, #5]         ; after 166 clocks
+000000B0:       ;         ;; mem[20] = 20 (PC otherwise)
+000000B0:       ;         
+000000B0:       ;         ;; test BGT not taken for NZVC = 0100
+000000B0: 1481  ; L20:    add r4, r4, #1
+000000B1: DFA6  ;         st pc, [r5, #6]         ; (after 171 clocks)
+000000B2: 0800  ;         adds r0, r0, r0
+000000B3: FE01  ;         bgt L21
+000000B4: DCA6  ;         st r4, [r5, #6]         ; after 178 clocks
+000000B5:       ;         ;; mem[21] = 21 (PC otherwise)
+000000B5:       ; 
+000000B5:       ;         ;; Added by JSP 10 09 2014
+000000B5:       ;         ;; test ST not updating zero flag (type 2)      
+000000B5: 1481  ; L21:    add r4, r4, #1
+000000B6: 8800  ;         ands r0, r0, r0         ; Set zero flag 
+000000B7: DCA7  ;         st   r4, [r5, #7]       ; Non-zero address 
+000000B8: F701  ;         beq  L22                ; Check if still 'zero' 
+000000B9: DFA7  ;         st   pc, [r5, #7]        
+000000BA:       ;         ;; mem[22] = 22 (PC otherwise)
+000000BA:       ; 
+000000BA:       ;         ;; test ST not updating zero flag (type 1)
+000000BA: 1481  ; L22:    add r4, r4, #1
+000000BB: 8800  ;         ands r0, r0, r0         ; Set zero flag
+000000BC: CC80  ;         st   r4, [r4, r0]       ; Non-zero address 
+000000BD: F701  ;         beq  L23                ; Check if still 'zero' 
+000000BE: CF80  ;         st   pc, [r4, r0]       
+000000BF:       ;         ;; mem[23] = 23 (PC otherwise)
+000000BF:       ; 
+000000BF:       ;         ;; test branch not updating Z flag
+000000BF: 1481  ; L23:    add r4, r4, #1
+000000C0: DCA9  ;         st r4, [r5, #9]
+000000C1: 8800  ;         ands r0, r0, r0         ; Set zero flag 
+000000C2: FA01  ;         bpl  N1                 ; None zero output from ALU
+000000C3: 0000  ;         nop 
+000000C4: F701  ; N1:     beq  L24                ; Check if still 'zero' 
+000000C5: DFA9  ;         st   pc, [r5, #9]                                           
+000000C6:       ;         ;; mem[24] = 24 (PC otherwise)
+000000C6:       ; 
+000000C6: D81F  ; L24:    st  r0, [r0, #-1]       ; Write to stop address
+000000C7: 0000  ;         nop
+000000C8:       ; 
+000000C8: F0FF  ; L25:    bal L25
+000000C9:       ; 
+000000C9:       ; 
+000000C9:       ; 

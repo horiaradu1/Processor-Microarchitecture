@@ -1,0 +1,138 @@
+00000000:       ;         ;; definitive test of STUMP
+00000000:       ;         ;; test2.s
+00000000:       ;         ;; basic tests:         branches
+00000000:       ;         ;;                      PC mangling commands
+00000000:       ;         ;;                      ALU ops
+00000000:       ;         ;;                      setting of flags
+00000000:       ; 
+00000000:       ;         
+00000000: F001  ;         bal L1
+00000001: D803  ; L0:     data 0xd803
+00000002:       ;         ;;  if the branch does not happen then the data statement
+00000002:       ;         ;;  is executed. It corresponds to "st r0, [r0, #3]"
+00000002:       ;         ;;  which places 0x0000 (NOP) in the st instruction  later
+00000002:       ; 
+00000002: 1107  ; L1:     add r1, r0, #7
+00000003: C900  ;         st r1, [r0, r0]         ; gets mangled to a nop if bal fails
+00000004:       ; 
+00000004:       ;         ;; test after 8 clocks
+00000004:       ;         ;; mem[0] = 7
+00000004:       ;         ;; checked:     branch always
+00000004:       ; 
+00000004:       ; 
+00000004: D3FC  ;         ld r3, [PC, L0]
+00000005: DB02  ;         st r3, [r0, #2]         ; don't store back in original position
+00000006:       ;         ;; test after 14 clocks
+00000006:       ;         ;; mem[2] = 0xd803
+00000006:       ;         ;; checked:     PC relative load
+00000006:       ; 
+00000006:       ; 
+00000006: D8FA  ;         st r0, [pc, L0]
+00000007:       ;         ;; test after 17 clocks
+00000007:       ;         ;; mem[1] = 0
+00000007:       ;         ;; checked:     PC relative store
+00000007:       ; 
+00000007:       ; 
+00000007:       ;         ;;  Now check reverse branches
+00000007: F002  ;         bal Lx1
+00000008: DF03  ; Lx2:    st pc, [r0, #3]
+00000009: F005  ;         bal Lx3
+0000000A: F0FD  ; Lx1:    bal Lx2
+0000000B: DF03  ;         st pc, [r0, #3]         ; only executed if reverse bal breaks
+0000000C: 0000  ;         nop                     ; if branch breaks equalise no of clocks
+0000000D:       ;         ;; test after 24 clocks
+0000000D:       ;         ;; mem[3] = 0x0009
+0000000D:       ;         ;; checked:      sign extension on neg branches
+0000000D:       ; 
+0000000D:       ; 
+0000000D:       ;         ;; Now check  adds to r7 (PC)
+0000000D: DF04  ;         st pc, [r0, #4]         ; (after 29 clocks)
+0000000E: F002  ;         bal Lx4
+0000000F: DF04  ; Lx3:    st pc, [r0, #4]         ; Value to be overwritten
+00000010: 17FC  ;         add pc, pc, #-4
+00000011:       ;         ;; test after 34 clocks
+00000011:       ;         ;; mem[4] = 0x000e
+00000011:       ;         ;; checked:     add to r7/pc
+00000011:       ; 
+00000011:       ; Lx4:    
+00000011: F012  ;         bal L3
+00000012:       ; 
+00000020:       ;         org 32
+00000020: A55A  ; Nums:   data 0xa55a
+00000021: 5A5A  ;         data 0x5a5a
+00000022: FFFF  ;         data 0xffff
+00000023: 8000  ;         data 0x8000
+00000024:       ;         
+00000024:       ; 
+00000024: 16FB  ; L3:     add r6, pc, #Nums-L5
+00000025: C5C0  ; L5:     ld r5, [r6, r0]         ; r5 = a55a
+00000026: D4C1  ;         ld r4, [r6, #1]         ; r4 = 5a5a
+00000027: 8394  ;         and r3, r4, r5
+00000028: DB05  ;         st r3, [r0, #5]
+00000029:       ;         ;; test after 51 clocks
+00000029:       ;         ;; mem[5] = 0x005a
+00000029:       ;         ;; checked:      AND function
+00000029:       ; 
+00000029: A394  ;         or r3, r4, r5
+0000002A: DB06  ;         st r3, [r0, #6]
+0000002B:       ;         ;; test after 56 clocks
+0000002B:       ;         ;; mem[6] = 0xff5a
+0000002B:       ;         ;; checked:      OR function
+0000002B:       ; 
+0000002B: 8800  ;         ands r0, r0, r0         ; Clear CF
+0000002C:       ;         
+0000002C: D5C2  ;         ld r5, [r6,#2]          ; r5 = ffff
+0000002D: D4C3  ;         ld r4, [r6,#3]          ; r4 = 8000
+0000002E: 3981  ;         adcs r1, r4, #1
+0000002F: D907  ;         st r1, [r0, #7]
+00000030:       ;         ;; test after 69 clocks
+00000030:       ;         ;; cc = 1000, mem[7] = 0x8001
+00000030:       ;         ;; checked N flag = 1
+00000030:       ; 
+00000030: 399F  ;         adcs r1, r4, #-1
+00000031: D908  ;         st r1, [r0, #8]
+00000032:       ;         ;; test after 74 clocks
+00000032:       ;         ;; cc = 0011, mem[8] = 7fff
+00000032:       ; 
+00000032: 2924  ;         adcs r1, r1, r1
+00000033: D909  ;         st r1, [r0, #9]
+00000034:       ;         ;; test after 79 clocks
+00000034:       ;         ;; cc = 1010, mem[9] = ffff
+00000034:       ;         ;; checks add with carry
+00000034:       ; 
+00000034: 0800  ;         adds r0, r0, r0
+00000035:       ;         ;; test after 94 clocks
+00000035:       ;         ;; cc = 0100
+00000035:       ;         ;; checked Z flag = 1
+00000035:       ; 
+00000035:       ; 
+00000035: 59A1  ;         subs r1, r5, #1
+00000036: D90A  ;         st r1, [r0, #10]
+00000037:       ;         ;; test after 86 clocks
+00000037:       ;         ;; cc = 1000, mem[10] = fffe
+00000037:       ; 
+00000037: 5981  ;         subs r1, r4, #1
+00000038: D90B  ;         st r1, [r0, #11]
+00000039:       ;         ;; test after 91 clocks
+00000039:       ;         ;; cc = 0010, mem[11] = 7fff
+00000039:       ;         
+00000039: 599F  ;         subs r1, r4, #-1
+0000003A: D90C  ;         st r1, [r0, #12]
+0000003B:       ;         ;; test after 96 clocks
+0000003B:       ;         ;; cc = 1001; mem[12] = 8001
+0000003B:       ; 
+0000003B: 69A0  ;         sbcs r1, r5, r0
+0000003C: D90D  ;         st r1, [r0, #13]
+0000003D:       ;         ;; test after 101 clocks
+0000003D:       ;         ;;  cc = 1000, mem[13] = fffe
+0000003D:       ; 
+0000003D: 6914  ;         sbcs r1, r0, r5
+0000003E: D90E  ;         st r1, [r0, #14]
+0000003F:       ;         ;; test after 106 clocks
+0000003F:       ;         ;; cc = 0001, mem[14] = 1
+0000003F:       ; 
+0000003F: D81F  ;         st  r0, [r0, #-1]
+00000040:       ;         ;; signal to simulator to stop after 109 clocks (write to FFFF)
+00000040: F0FF  ; Fin:    bal Fin
+00000041:       ; 
+00000041:       ; 

@@ -1,0 +1,107 @@
+00000000:       ;         ;; definitive test of STUMP
+00000000:       ;         ;; test3.s
+00000000:       ;         ;; tests:       logical shift operations
+00000000:       ;         ;;              arith shift operations
+00000000:       ;         
+00000000: F022  ;         bal Main
+00000001:       ; 
+00000020:       ;         org 32
+00000020: 8055  ; Nums:   data 0x8055, 0x0055, 0x80aa
+00000021: 0055  ; 
+00000022: 80AA  ; 
+00000023: 16FC  ; Main:   add r6, pc, #Nums-Next
+00000024: 0800  ; Next:   adds r0, r0, r0         ; clear carry flag
+00000025: D1C0  ;         ld r1, [r6, #0]
+00000026: A923  ;         ors r1, r1, r0, rrc
+00000027: D900  ;         st r1, [r0, #0]         ; after 15 cycles
+00000028:       ;         ;; cc = 0001, mem[0] = 0x402a
+00000028:       ;         
+00000028: A923  ;         ors r1, r1, r0, rrc
+00000029: D901  ;         st r1, [r0, #1]         ; after 20 cycles
+0000002A:       ;         ;; cc = 1000, mem[1] = 0xa015
+0000002A:       ;         ;; checked:      rrc OK and is not asr/ror
+0000002A:       ; 
+0000002A:       ;         ;; test asr
+0000002A: D1C0  ;         ld r1, [r6, #0]
+0000002B: A921  ;         ors r1, r1, r0, asr
+0000002C: D902  ;         st r1, [r0, #2]         ; after 28 cycles
+0000002D:       ;         ;; cc = 1001, mem[2] = 0xc02a
+0000002D:       ;         
+0000002D: A921  ;         ors r1, r1, r0, asr
+0000002E: D903  ;         st r1, [r0, #3]         ; after 33 cycles
+0000002F:       ;         ;; cc = 1000, mem[3] = 0xe015
+0000002F:       ;         
+0000002F: D1C1  ;         ld r1, [r6, #1]
+00000030: A921  ;         ors r1, r1, r0, asr
+00000031: D904  ;         st r1, [r0, #4]         ; after 41 cycles
+00000032:       ;         ;; cc = 0001 , mem[4] = 0x002a
+00000032:       ;         
+00000032: A921  ;         ors r1, r1, r0, asr
+00000033: D905  ;         st r1, [r0, #5]         ; after 46 cycles
+00000034:       ;         ;; cc = 0000 , mem[5] = 0x0015
+00000034:       ;         ;; checked:      asr OK ans is not rrc/ror
+00000034:       ; 
+00000034:       ;         ;; check ror
+00000034: D1C2  ;         ld r1, [r6, #2]
+00000035: A922  ;         ors r1, r1, r0, ror
+00000036: D906  ;         st r1, [r0, #6]         ; after 54 cycles
+00000037:       ;         ;; cc = 0000, mem[6] = 0x4055
+00000037:       ; 
+00000037: A922  ;         ors r1, r1, r0, ror
+00000038: D907  ;         st r1, [r0, #7]         ; after 59 cycles
+00000039:       ;         ;; cc = 1001, mem[7] = 0xa02a
+00000039:       ; 
+00000039: A922  ;         ors r1, r1, r0, ror
+0000003A: D908  ;         st r1, [r0, #8]         ; after 64 cycles
+0000003B:       ;         ;; cc =0000 , mem[8] = 0x5015
+0000003B:       ; 
+0000003B: A922  ;         ors r1, r1, r0, ror
+0000003C: D909  ;         st r1, [r0, #9]         ; after 69 cycles
+0000003D:       ;         ;; cc = 1001, mem[9] =0xa80a
+0000003D:       ;         ;; checked:     ror OK & is not rrc/asr
+0000003D:       ;         
+0000003D: A800  ;         ors r0, r0, r0
+0000003E: 3101  ;         adc r1, r0, #1
+0000003F: D90A  ;         st r1, [r0, #10]        ; after 76 cycles
+00000040:       ;         ;; checked:     no shift + logical resets cy flag
+00000040:       ;         ;; cc = 0100, mem[10] = 1 (not 2!)
+00000040:       ; 
+00000040:       ;         ;; check that carry-in to alu for arith ops
+00000040:       ;         ;; comes from the cc reg not the shifter!
+00000040:       ; 
+00000040: 5801  ;         subs r0, r0, #1         ; set carry flag
+00000041: 1108  ;         add r1, r0, #8
+00000042: 2921  ;         adcs r1, r1, r0, asr
+00000043: D90B  ;         st r1, [r0, #11]        ; after 85 cycles
+00000044:       ;         ;; cc = 0000, mem[11] = 5
+00000044:       ; 
+00000044: 2121  ;         adc r1, r1, r0, asr
+00000045: D90C  ;         st r1, [r0, #12]        ; after 90 cycles
+00000046:       ;         ;; mem[12] = 2
+00000046:       ;         ;; checked:     cy for arith ops not affected by shifts
+00000046:       ;         
+00000046: 121D  ;         add r2, r0, #-3         ; r2=0xfffd
+00000047: AA41  ;         ors r2, r2, r0, asr     ; r2=0xfffe and cys set to 1
+00000048: 3240  ;         adc r2, r2, #0          ; r2=0xffff
+00000049: DA0D  ;         st r2, [r0,#13]         ; after 99 cycles
+0000004A:       ;         ;; mem[13]=0xffff
+0000004A:       ;         ;; checked cys=1 for type 1 shift
+0000004A:       ; 
+0000004A: BA03  ;         ors r2, r0, #3          ; r2=3 and cys set to 0
+0000004B: 3240  ;         adc r2, r2, #0          ; r2=3
+0000004C: DA0E  ;         st r2, [r0, #14]        ; after 106 cycles
+0000004D:       ;         ;; mem[14]=3
+0000004D:       ;         ;; checked cys set to 0 for type 2
+0000004D:       ; 
+0000004D: 121D  ;         add r2, r0, #-3         ; r2=0xfffd
+0000004E: AA41  ;         ors r2, r2, r0, asr     ; r2=0xfffe and cys set to 1
+0000004F: 2240  ;         adc r2, r2, r0          ; r2=0xffff
+00000050: 8A48  ;         ands r2, r2, r2         ; r2=0xffff and cys should be 0
+00000051: 3240  ;         adc r2, r2, #0          ; r2=0xffff
+00000052: DA0F  ;         st r2, [r0, #15]        ; after 119 cycles
+00000053:       ;         ;; mem[15]=0xffff
+00000053:       ;         ;; checked cys set to 0 for type 1 no shift
+00000053:       ; 
+00000053: D81F  ;         st  r0, [r0, #-1]       ; after 122 cycles
+00000054: F0FF  ; Fin:    bal Fin
+00000055:       ; 

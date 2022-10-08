@@ -1,0 +1,167 @@
+00000000:       ;         ;; Definitive (!!) test of processor
+00000000:       ;         ;; test1.s
+00000000:       ;         ;; Basic tests: instruction fetch
+00000000:       ;         ;;              register addressing
+00000000:       ;         ;; will not work with pipelined version
+00000000:       ;         
+00000000:       ;         ;; NB program gets trampled on
+00000000:       ; 
+00000000:       ;         ;; Cycle count corrected for newer Stump (2012)
+00000000:       ;         ;; Assumes first fetch after 2 clocks
+00000000:       ; 
+00000000:       ;         org 0
+00000000:       ; 
+00000000:       ;         
+00000000:       ;         ;;  test basic add
+00000000:       ; Main:
+00000000: C800  ;         st r0, [r0, r0]
+00000001:       ;         ;; test after 4 clocks
+00000001:       ;         ;; mem[0] = 0
+00000001:       ;         ;; checked:     instruction fetch
+00000001:       ;         ;;              r0 reads zero
+00000001:       ;         ;;              st instruction (type 1)
+00000001:       ;         ;;              alu 0 + 0 = 0
+00000001:       ;         
+00000001: 111F  ;         add r1, r0, #-1
+00000002: D901  ;         st r1, [r0, #1]
+00000003:       ;         ;; test after 9 clocks
+00000003:       ;         ;; mem[1] = -1 (ffff)
+00000003:       ;         ;; checked:     basic add instruction
+00000003:       ;         ;;              store instruction (type 2)
+00000003:       ;         ;;              sign extension 5 bit literal
+00000003:       ;         ;;              r1 can be read & written
+00000003:       ; 
+00000003:       ;         ;; Now test the register addressing
+00000003:       ;         ;;  first write port
+00000003: 121E  ;         add r2, r0, #-2
+00000004: DA02  ;         st r2, [r0, #2]
+00000005:       ;         ;; test after 14 clocks
+00000005:       ;         ;; mem[2] = -2 (fffe)
+00000005:       ;         ;; checked:     addressing of write reg 2
+00000005:       ; 
+00000005: 131D  ;         add r3, r0, #-3
+00000006: DB03  ;         st r3, [r0, #3]
+00000007:       ;         ;; test after 19 clocks
+00000007:       ;         ;; mem[3] = -3 (fffd)
+00000007:       ;         ;; checked:     addressing of write reg 3
+00000007:       ;         
+00000007: 141C  ;         add r4, r0, #-4
+00000008: DC04  ;         st r4, [r0, #4]
+00000009:       ;         ;; test after 24 clocks
+00000009:       ;         ;; mem[4] = -4 (fffc)
+00000009:       ;         ;; checked:     addressing of write reg 4
+00000009:       ; 
+00000009: 151B  ;         add r5, r0, #-5
+0000000A: DD05  ;         st r5, [r0, #5]
+0000000B:       ;         ;; test after 29 clocks
+0000000B:       ;         ;; mem[5] = -5 (fffb)
+0000000B:       ;         ;; checked:      addressing of write reg 5
+0000000B:       ; 
+0000000B: 161A  ;         add r6, r0, #-6
+0000000C: DE06  ;         st r6, [r0, #6]
+0000000D:       ;         ;; test after 34 clocks
+0000000D:       ;         ;; mem[6] = -6 (fffa)
+0000000D:       ;         ;; checked:     addressing of write reg 6
+0000000D:       ; 
+0000000D:       ;         ;; We won't test write to r7 as that may corrupt
+0000000D:       ;         ;;  the check data if program runs wild.
+0000000D:       ;         ;;  now test read port A (including pc)
+0000000D:       ; 
+0000000D: 11C1  ;         add r1, r6, #1
+0000000E: D907  ;         st r1, [r0, #7]
+0000000F:       ;         ;; test after 39 clocks
+0000000F:       ;         ;; mem[7] = -5 (fffb)
+0000000F:       ;         ;; checked:     addressing of portA = 6
+0000000F:       ; 
+0000000F: 12A2  ;         add r2, r5, #2
+00000010: DA08  ;         st r2, [r0, #8]
+00000011:       ;         ;; test after 44 clocks
+00000011:       ;         ;; mem[8] = -3 (fffd)
+00000011:       ;         ;; checked:      addressing of portA = 5
+00000011:       ; 
+00000011: 1383  ;         add r3, r4, #3
+00000012: DB09  ;         st r3, [r0, #9]
+00000013:       ;         ;; test after 49 clocks
+00000013:       ;         ;; mem[9] = -1 (ffff)
+00000013:       ;         ;; checked:     addressing of portA = 4
+00000013:       ; 
+00000013: 1464  ;         add r4, r3, #4
+00000014: DC0A  ;         st r4, [r0, #10]
+00000015:       ;         ;; test after 54 clocks
+00000015:       ;         ;; mem[10] = 3
+00000015:       ;         ;; checked:     addressing of portA = 3
+00000015:       ; 
+00000015: 1545  ;         add r5, r2, #5
+00000016: DD0B  ;         st r5, [r0, #11]
+00000017:       ;         ;; test after 59 clocks
+00000017:       ;         ;; mem[11] = 2
+00000017:       ;         ;; checked:     addressing of portA = 2
+00000017:       ; 
+00000017: 1626  ;         add r6, r1, #6
+00000018: DE0C  ;         st r6, [r0, #12]
+00000019:       ;         ;; test after 64 clocks
+00000019:       ;         ;; mem[12] = 1
+00000019:       ;         ;;  checked:    addressing of portA = 1
+00000019:       ;         
+00000019: 11E6  ;         add r1, r7, #6
+0000001A: D90D  ;         st r1, [r0, #13]
+0000001B:       ;         ;; test after 69 clocks
+0000001B:       ;         ;; mem[13] = 0x0020 
+0000001B:       ;         ;; checked:     addressing of portA = PC
+0000001B:       ;         
+0000001B:       ;         ;; Now check Port B - tricky to build up incremental tests
+0000001B:       ;         
+0000001B: 160F  ;         add r6, r0, #15
+0000001C: DE0E  ;         st r6, [r0, #14]
+0000001D:       ;         ;; test after 74 clocks
+0000001D:       ;         ;; mem[14] = 0x000f
+0000001D:       ;         ;; checked:     r6 is pointing to mem[15]
+0000001D:       ;         
+0000001D: 01D4  ;         add r1, r6, r5
+0000001E: D9C0  ;         st r1, [r6, #0]         ; use r6 as mem pointer
+0000001F:       ;         ;; test after 79 clocks
+0000001F:       ;         ;; mem[15] = 0x11
+0000001F:       ;         ;; checked:     addressing of port B = r5
+0000001F:       ;         
+0000001F: 01B0  ;         add r1, r5, r4
+00000020: D9C1  ;         st r1, [r6, #1]
+00000021:       ;         ;; test after 84 clocks
+00000021:       ;         ;; mem[16] = 5
+00000021:       ;         ;; checked:     addressing of port B = r4
+00000021:       ;         
+00000021: 018C  ;         add r1, r4, r3
+00000022: D9C2  ;         st r1, [r6, #2]
+00000023:       ;         ;; test after 89 clocks
+00000023:       ;         ;; mem[17] = 2
+00000023:       ;         ;; checked:     addressing of port A = r3
+00000023:       ;         
+00000023: 0168  ;         add r1, r3, r2
+00000024: D9C3  ;         st r1, [r6, #3]
+00000025:       ;         ;; test after 94 clocks
+00000025:       ;         ;; mem[18] = 0xfffc
+00000025:       ;         ;; checked:     addressing of port A = r2
+00000025:       ;         
+00000025: 0144  ;         add r1, r2, r1
+00000026: D9C4  ;         st r1, [r6, #4]
+00000027:       ;         ;; test after 99 clocks
+00000027:       ;         ;; mem[19] = 0xfff9
+00000027:       ;         ;; checked:     addressing of portB = r1
+00000027:       ; 
+00000027:       ;         
+00000027: 013C  ;         add r1, r1, pc
+00000028: D9C5  ;         st r1, [r6, #5]
+00000029:       ;         ;; test after 104 clocks
+00000029:       ;         ;; mem[20] = 0x0021
+00000029:       ;         ;; checked:     addressing of portB = PC
+00000029:       ; 
+00000029: 0118  ;         add r1, r0, r6
+0000002A: D9C6  ;         st r1, [r6,#6]
+0000002B:       ;         ;; test after 109 clocks
+0000002B:       ;         ;; mem[21] = 0x000f
+0000002B:       ;         ;; checked:     addressing of portB = r6
+0000002B:       ; 
+0000002B: 0000  ;         nop
+0000002C: D81F  ;         st  r0, [r0, #-1]
+0000002D:       ;         ;; signal to simulator to stop after 114 clocks (write to FFFF)
+0000002D: F0FF  ; Fin:    bal Fin
+0000002E:       ; 
